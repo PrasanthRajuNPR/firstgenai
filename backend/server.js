@@ -35,7 +35,7 @@ app.use("/api/roadmap", require("./routes/roadmap"));
 app.use("/api/planner", require("./routes/planner"));
 app.use("/api/chat", require("./routes/chat"));
 app.use("/api/courses", require("./routes/courseRoutes"));
-app.use("/api/ex-ai", require("./routes/explainRoute"));
+app.use("/api/ai", require("./routes/explainRoute"));
 
 // Health check
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
