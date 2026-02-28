@@ -1,0 +1,74 @@
+/* ================================
+   Dashboard Layout
+================================ */
+.dashboard {
+  min-height: 100vh;
+  background: #101020;
+  color: #ffffff;
+  padding: 60px 20px;
+}
+
+.dashboard__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard__title {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  background: linear-gradient(to right, #4080f0, #5090f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ================================
+   Tabs
+================================ */
+.dashboard__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid #102040;
+  background: #102030;
+  color: #cccccc;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: #102040;
+  color: #ffffff;
+}
+
+.tab-btn.active {
+  background: linear-gradient(to right, #4080f0, #5090f0);
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(64, 128, 240, 0.5);
+}
+
+/* ================================
+   Courses Grid
+================================ */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+/* ================================
+   Empty State
+================================ */
+.empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: #aaaaaa;
+  font-size: 18px;
+}

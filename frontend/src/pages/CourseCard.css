@@ -1,0 +1,148 @@
+/* =====================================
+   Course Card Base
+===================================== */
+.course-card {
+  position: relative;
+  padding: 30px;
+  border-radius: 16px;
+  border: 1px solid #102040;
+  background: linear-gradient(to bottom right, #102030, #101020);
+  overflow: hidden;
+
+  opacity: 0;
+  animation: fadeIn 0.6s ease forwards;
+  animation-delay: var(--delay, 0ms);
+
+  transition: transform 0.4s ease,
+              box-shadow 0.4s ease,
+              border-color 0.4s ease;
+}
+
+.course-card:hover {
+  border-color: #4080f0;
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 0 30px rgba(64, 128, 240, 0.3);
+}
+
+/* =====================================
+   Overlay
+===================================== */
+.course-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom right,
+    rgba(64, 128, 240, 0.05),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.course-card:hover .course-card__overlay {
+  opacity: 1;
+}
+
+/* =====================================
+   Content
+===================================== */
+.course-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* =====================================
+   Icon
+===================================== */
+.course-card__icon {
+  width: 56px;
+  height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+  background: linear-gradient(to bottom right, #102040, #000);
+  color: #4080f0;
+}
+
+.course-card:hover .course-card__icon {
+  color: #5090f0;
+  box-shadow: 0 0 20px rgba(64, 128, 240, 0.4);
+}
+
+/* =====================================
+   Text Content
+===================================== */
+.course-card__title {
+  font-size: 20px;
+  margin-bottom: 12px;
+  transition: color 0.3s ease;
+}
+
+.course-card:hover .course-card__title {
+  color: #5090f0;
+}
+
+.course-card__description {
+  flex-grow: 1;
+  margin-bottom: 20px;
+  color: #aaaaaa;
+  line-height: 1.6;
+}
+
+/* =====================================
+   Pricing
+===================================== */
+.course-card__pricing {
+  margin-bottom: 15px;
+}
+
+.course-card__price {
+  font-weight: 600;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* =====================================
+   Button
+===================================== */
+.course-card__button {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+
+  font-weight: 600;
+  cursor: pointer;
+
+  background: linear-gradient(to right, #4080f0, #5090f0);
+  color: #ffffff;
+
+  transition: transform 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+.course-card__button:hover:not(:disabled) {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px rgba(64, 128, 240, 0.6);
+}
+
+.course-card__button--purchased {
+  background: linear-gradient(to right, #102040, #102030);
+  color: #4080f0;
+  border: 1px solid rgba(64, 128, 240, 0.3);
+  cursor: default;
+}
+
+/* =====================================
+   Animation
+===================================== */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
