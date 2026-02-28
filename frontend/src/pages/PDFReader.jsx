@@ -3,10 +3,9 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+// ✅ FIX: Use CDN instead of import.meta.url (which breaks on Render/production builds)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
 const API_BASE = "https://firstgenai.onrender.com";
 
 const styles = `
@@ -170,6 +169,8 @@ const styles = `
   .footer-brand { font-size: 9px; color: #1e293b; font-family: 'Syne', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
   .copy-btn { background: none; border: none; color: #334155; cursor: pointer; font-size: 10px; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
   .copy-btn:hover { color: #60a5fa; }
+
+  .error-text { font-size: 12px; color: #f87171; line-height: 1.6; }
 `;
 
 function useTypewriter(text, speed = 14) {
@@ -191,12 +192,13 @@ function useTypewriter(text, speed = 14) {
 function ExplainPopup({ text, position, onClose, pdfTopic }) {
   const [explanation, setExplanation] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [mode, setMode] = useState("normal");
   const [copied, setCopied] = useState(false);
   const { displayed, done } = useTypewriter(loading ? "" : explanation);
 
   const fetchExplanation = useCallback(async (m) => {
-    setLoading(true); setExplanation("");
+    setLoading(true); setExplanation(""); setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/ai/explain`, {
         method: "POST",
@@ -206,10 +208,11 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
         },
         body: JSON.stringify({ selectedText: text, documentTopic: pdfTopic, mode: m }),
       });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
       setExplanation(data.explanation || "Could not generate explanation.");
-    } catch {
-      setExplanation("Connection error. Please try again.");
+    } catch (err) {
+      setError(err.message || "Connection error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -222,9 +225,8 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
 
-  // Smart dynamic positioning
   const POPUP_W = 315;
-  const POPUP_MAX_H = 360; // header + tabs + max body + footer
+  const POPUP_MAX_H = 360;
   const MARGIN = 12;
   const spaceBelow = window.innerHeight - position.y - MARGIN;
   const spaceAbove = position.y - MARGIN;
@@ -235,7 +237,6 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
   } else if (spaceAbove >= POPUP_MAX_H) {
     top = position.y - POPUP_MAX_H - MARGIN;
   } else {
-    // center vertically on screen
     top = Math.max(MARGIN, (window.innerHeight - POPUP_MAX_H) / 2);
   }
 
@@ -246,7 +247,6 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
 
   return (
     <div className="popup-card" style={{ top, left }}>
-      {/* Header */}
       <div className="popup-header">
         <div className="popup-badge">
           <div className="popup-dot" />
@@ -255,12 +255,10 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
         <button className="popup-close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Selected text preview */}
       <div className="popup-selected">
         "{text.length > 80 ? text.slice(0, 80) + "…" : text}"
       </div>
 
-      {/* Mode tabs */}
       <div className="popup-tabs">
         {[
           { id: "normal", label: "📖 Explain" },
@@ -277,12 +275,13 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
         ))}
       </div>
 
-      {/* Body — scrollable */}
       <div className="popup-body">
         {loading ? (
           <>{[100, 82, 60].map((w, i) => (
             <div key={i} className="skeleton" style={{ width: `${w}%` }} />
           ))}</>
+        ) : error ? (
+          <p className="error-text">⚠️ {error}</p>
         ) : (
           <p className={`explanation-text ${!done ? "typing-cursor" : ""}`}>
             {displayed}
@@ -290,10 +289,9 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
         )}
       </div>
 
-      {/* Footer */}
       <div className="popup-footer">
         <span className="footer-brand">firstgenai</span>
-        <button className="copy-btn" onClick={handleCopy}>
+        <button className="copy-btn" onClick={handleCopy} disabled={loading || !!error}>
           {copied ? "✓ Copied!" : "⎘ Copy"}
         </button>
       </div>
@@ -310,13 +308,24 @@ export default function PDFReader() {
   const [popup, setPopup] = useState(null);
   const [pdfTopic, setPdfTopic] = useState("General Academic Document");
   const [dragOver, setDragOver] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   const handleFileSelect = (file) => {
     if (!file || file.type !== "application/pdf") return;
+    // ✅ Revoke previous blob URL to avoid memory leaks
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setLoadError(null);
+    setNumPages(null);
+    setCurrentPage(1);
     setPdfFile(file);
     setPdfUrl(URL.createObjectURL(file));
     setPdfTopic(file.name.replace(".pdf", "").replace(/[-_]/g, " "));
   };
+
+  // ✅ Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
+  }, [pdfUrl]);
 
   const handleTextSelection = useCallback(() => {
     const selection = window.getSelection();
@@ -348,7 +357,6 @@ export default function PDFReader() {
       <style>{styles}</style>
       <div className="pdf-root">
 
-        {/* Topbar */}
         <div className="topbar">
           <span className="topbar-title">FirstGen<span>.ai</span> — PDF Reader</span>
           {pdfFile && (
@@ -369,7 +377,6 @@ export default function PDFReader() {
 
         {pdfFile && <div className="hint-bar">✦ Select any text for instant AI explanation</div>}
 
-        {/* PDF Area */}
         <div
           className="pdf-canvas"
           onClick={(e) => { if (!e.target.closest(".popup-card")) setPopup(null); }}
@@ -389,18 +396,33 @@ export default function PDFReader() {
                 <input type="file" accept=".pdf" style={{ display: "none" }} onChange={e => handleFileSelect(e.target.files[0])} />
               </label>
             </div>
+          ) : loadError ? (
+            <div style={{ marginTop: 60, textAlign: "center" }}>
+              <p style={{ color: "#f87171", fontSize: 14, marginBottom: 12 }}>⚠️ Failed to load PDF. Please try again.</p>
+              <label className="upload-cta" style={{ cursor: "pointer" }}>
+                Try Another File
+                <input type="file" accept=".pdf" style={{ display: "none" }} onChange={e => handleFileSelect(e.target.files[0])} />
+              </label>
+            </div>
           ) : (
             <Document
               file={pdfUrl}
-              onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+              onLoadSuccess={({ numPages }) => { setNumPages(numPages); setLoadError(null); }}
+              onLoadError={(err) => { console.error("PDF load error:", err); setLoadError(err.message); }}
               loading={<div style={{ color: "#64748b", fontSize: 13, marginTop: 40 }}>Loading PDF…</div>}
             >
-              <Page pageNumber={currentPage} scale={scale} renderTextLayer={true} renderAnnotationLayer={true} loading={null} />
+              <Page
+                pageNumber={currentPage}
+                scale={scale}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                loading={null}
+                onRenderError={(err) => console.error("Page render error:", err)}
+              />
             </Document>
           )}
         </div>
 
-        {/* Popup */}
         {popup && (
           <ExplainPopup
             text={popup.text}
