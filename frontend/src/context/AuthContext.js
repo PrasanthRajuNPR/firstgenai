@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const API = axios.create({ baseURL: 'http://localhost:3001/api' });
+const API = axios.create({ baseURL: 'https://firstgenai.onrender.com/api' });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
