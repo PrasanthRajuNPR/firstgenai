@@ -58,7 +58,7 @@ function Courses() {
     key: process.env.REACT_APP_RAZORPAY_KEY_ID,
     amount: order.amount,
     currency: order.currency,
-    name: "EduEmpower",
+    name: "firstgenai",
     description: "Course Enrollment",
     order_id: order.id,
     prefill: { email: user?.email },

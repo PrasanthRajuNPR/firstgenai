@@ -7,7 +7,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url
 ).toString();
-const API_BASE = "https://firstgenai.onrender.com/";
+const API_BASE = "https://firstgenai.onrender.com";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -292,7 +292,7 @@ function ExplainPopup({ text, position, onClose, pdfTopic }) {
 
       {/* Footer */}
       <div className="popup-footer">
-        <span className="footer-brand">EduEmpower AI</span>
+        <span className="footer-brand">firstgenai</span>
         <button className="copy-btn" onClick={handleCopy}>
           {copied ? "✓ Copied!" : "⎘ Copy"}
         </button>
@@ -350,7 +350,7 @@ export default function PDFReader() {
 
         {/* Topbar */}
         <div className="topbar">
-          <span className="topbar-title">Edu<span>Empower</span> — PDF Reader</span>
+          <span className="topbar-title">FirstGen<span>.ai</span> — PDF Reader</span>
           {pdfFile && (
             <>
               <button className="nav-btn" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}>‹</button>

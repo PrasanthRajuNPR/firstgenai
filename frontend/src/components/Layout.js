@@ -33,7 +33,7 @@ export default function Layout({ children }) {
     <>
       <div className="layout">
         <aside className="sidebar">
-          <div className="sidebar-logo">Edu<span>Empower</span></div>
+          <div className="sidebar-logo">FristGen<span>.ai</span></div>
           <nav className="sidebar-nav">
             {navItems.map(item => (
               item.path === '/VR-edu'

@@ -30,7 +30,7 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">Edu<span>Empower</span></div>
+        <div className="auth-logo">FirstGen<span>.ai</span></div>
         <p className="auth-subtitle">Start your personalized learning journey</p>
 
         {error && <div className="error-msg">{error}</div>}
