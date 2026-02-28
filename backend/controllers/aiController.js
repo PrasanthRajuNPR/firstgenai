@@ -19,10 +19,7 @@ const getFallbackRoadmap = (profile) => ({
   ],
 });
 
-/**
- * NEW: Unified Gemini API Call
- * Using Gemini 2.5 Flash for high performance and native JSON mode.
- */
+
 const callGeminiAPI = async (profile) => {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   // Using v1beta for stable JSON Schema support

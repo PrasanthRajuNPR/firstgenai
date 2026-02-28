@@ -17,8 +17,7 @@ import QuizSetupPage from "./pages/QuizSetupPage "
 import QuizPage from "./pages/QuizPage";
 import QuizResultPage from "./pages/QuizResultPage";
 import QuizHistoryPage from "./pages/QuizHistoryPage";
-
-
+import ChatWidget from "./ChatWidget";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -64,6 +63,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <AppRoutes />
+        <ChatWidget/>
       </BrowserRouter>
     </AuthProvider>
   );

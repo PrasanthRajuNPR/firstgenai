@@ -1,148 +1,221 @@
-/* =====================================
-   Course Card Base
-===================================== */
+/* ============================================================
+   CourseCard.css — Individual Course Card
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+/* ============================================================
+   BASE CARD
+   ============================================================ */
+
 .course-card {
   position: relative;
-  padding: 30px;
+  padding: 28px;
   border-radius: 16px;
-  border: 1px solid #102040;
-  background: linear-gradient(to bottom right, #102030, #101020);
+  border: 1px solid rgba(99, 157, 255, 0.1);
+  background: linear-gradient(145deg, #0d1830 0%, #080f20 100%);
   overflow: hidden;
+  cursor: pointer;
 
   opacity: 0;
-  animation: fadeIn 0.6s ease forwards;
+  animation: cardFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation-delay: var(--delay, 0ms);
 
-  transition: transform 0.4s ease,
-              box-shadow 0.4s ease,
-              border-color 0.4s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .course-card:hover {
-  border-color: #4080f0;
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 0 30px rgba(64, 128, 240, 0.3);
+  border-color: rgba(79, 142, 247, 0.45);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow:
+    0 0 0 1px rgba(79,142,247,0.18),
+    0 20px 60px rgba(0,0,0,0.5),
+    0 0 40px rgba(79,142,247,0.1);
 }
 
-/* =====================================
-   Overlay
-===================================== */
+/* ============================================================
+   BACKGROUND GLOW LAYERS
+   ============================================================ */
+
+/* Animated top-edge glow */
+.course-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79,142,247,0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.course-card:hover::before { opacity: 1; }
+
+/* Bottom right blob */
+.course-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: -40px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(79,142,247,0.06);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.course-card:hover::after {
+  background: rgba(79,142,247,0.12);
+  transform: scale(1.3);
+}
+
+/* ============================================================
+   OVERLAY
+   ============================================================ */
+
 .course-card__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    to bottom right,
-    rgba(64, 128, 240, 0.05),
-    transparent
+    135deg,
+    rgba(79, 142, 247, 0.04) 0%,
+    transparent 60%
   );
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
 }
 
-.course-card:hover .course-card__overlay {
-  opacity: 1;
-}
+.course-card:hover .course-card__overlay { opacity: 1; }
 
-/* =====================================
-   Content
-===================================== */
+/* ============================================================
+   CONTENT
+   ============================================================ */
+
 .course-card__content {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: 0;
 }
 
-/* =====================================
-   Icon
-===================================== */
-.course-card__icon {
-  width: 56px;
-  height: 56px;
+/* ============================================================
+   ICON
+   ============================================================ */
 
+.course-card__icon {
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 12px;
-  background: linear-gradient(to bottom right, #102040, #000);
-  color: #4080f0;
+  background: rgba(79,142,247,0.1);
+  border: 1px solid rgba(79,142,247,0.2);
+  color: #4f8ef7;
+  margin-bottom: 18px;
+  transition: all 0.3s ease;
 }
 
 .course-card:hover .course-card__icon {
-  color: #5090f0;
-  box-shadow: 0 0 20px rgba(64, 128, 240, 0.4);
+  background: rgba(79,142,247,0.18);
+  border-color: rgba(79,142,247,0.4);
+  color: #6ba3ff;
+  box-shadow: 0 0 20px rgba(79,142,247,0.25);
 }
 
-/* =====================================
-   Text Content
-===================================== */
+/* ============================================================
+   TEXT
+   ============================================================ */
+
 .course-card__title {
-  font-size: 20px;
-  margin-bottom: 12px;
-  transition: color 0.3s ease;
+  font-family: 'Outfit', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #d8e4ff;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  transition: color 0.25s ease;
 }
 
-.course-card:hover .course-card__title {
-  color: #5090f0;
-}
+.course-card:hover .course-card__title { color: #e6eeff; }
 
 .course-card__description {
   flex-grow: 1;
   margin-bottom: 20px;
-  color: #aaaaaa;
-  line-height: 1.6;
+  color: rgba(122,147,196,0.8);
+  line-height: 1.65;
+  font-size: 13.5px;
 }
 
-/* =====================================
-   Pricing
-===================================== */
+/* ============================================================
+   PRICING
+   ============================================================ */
+
 .course-card__pricing {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .course-card__price {
-  font-weight: 600;
-  font-size: 16px;
-  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  color: #e6eeff;
 }
 
-/* =====================================
-   Button
-===================================== */
+/* ============================================================
+   BUTTON
+   ============================================================ */
+
 .course-card__button {
-  padding: 12px;
+  width: 100%;
+  padding: 11px 16px;
   border: none;
-  border-radius: 8px;
-
-  font-weight: 600;
+  border-radius: 9px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
-
-  background: linear-gradient(to right, #4080f0, #5090f0);
-  color: #ffffff;
-
-  transition: transform 0.3s ease,
-              box-shadow 0.3s ease;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.course-card__button:hover:not(:disabled) {
-  transform: scale(1.03);
-  box-shadow: 0 0 25px rgba(64, 128, 240, 0.6);
+.course-card__button:not(.course-card__button--purchased) {
+  background: linear-gradient(135deg, #4f8ef7, #6370fa);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79,142,247,0.25);
+}
+
+.course-card__button:not(.course-card__button--purchased):hover {
+  box-shadow: 0 6px 24px rgba(79,142,247,0.45);
+  transform: translateY(-1px);
+}
+
+.course-card__button:not(.course-card__button--purchased):active {
+  transform: scale(0.98);
 }
 
 .course-card__button--purchased {
-  background: linear-gradient(to right, #102040, #102030);
-  color: #4080f0;
-  border: 1px solid rgba(64, 128, 240, 0.3);
+  background: rgba(0,229,160,0.08);
+  color: #00e5a0;
+  border: 1px solid rgba(0,229,160,0.25);
   cursor: default;
 }
 
-/* =====================================
-   Animation
-===================================== */
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+.course-card__button--purchased:hover {
+  background: rgba(0,229,160,0.13);
+  border-color: rgba(0,229,160,0.4);
 }
