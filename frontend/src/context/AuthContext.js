@@ -8,7 +8,7 @@ import axios from 'axios';
    resolves to http://localhost:5000/api/roadmap
 ================================================================ */
 export const API = axios.create({
-  baseURL: (process.env.REACT_APP_API_URL || 'https://firstgenai.onrender.com/') + '/api',
+  baseURL: (process.env.REACT_APP_API_URL || 'https://firstgenai.onrender.com') + '/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
