@@ -1,10 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ============================================================
-   DESIGN SYSTEM — FirstGen.ai
-   Dark-tech aesthetic: deep navy base, electric blue accents,
-   emerald highlights. Sharp geometry. Precision spacing.
-   ============================================================ */
 
 :root {
   /* Core backgrounds */
@@ -57,9 +52,6 @@
   --trans-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
 
 *, *::before, *::after {
   margin: 0;
@@ -99,9 +91,6 @@ img, svg { display: block; max-width: 100%; }
 
 button { font-family: var(--font-body); }
 
-/* ============================================================
-   SCROLLBAR
-   ============================================================ */
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -111,9 +100,6 @@ button { font-family: var(--font-body); }
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* ============================================================
-   UTILITY — SPINNER / LOADING
-   ============================================================ */
 
 .loading-screen {
   display: flex;
@@ -1051,10 +1037,6 @@ button { font-family: var(--font-body); }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
 }
-
-/* ============================================================
-   PROGRESS PAGE — RING
-   ============================================================ */
 
 .progress-ring-container {
   display: flex;

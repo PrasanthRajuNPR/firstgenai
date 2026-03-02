@@ -1,105 +1,332 @@
+// src/pages/ProgressPage.js
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { API } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { API } from '../context/AuthContext';
+import { PlayCircle, BookOpen, CheckCircle2, Trophy, Target, TrendingUp, ArrowRight } from 'lucide-react';
 
-export default function ProgressPage() {
-  const { user } = useAuth();
-  const [progress, setProgress] = useState(null);
-  const [loading, setLoading] = useState(true);
+// ── SVG ring component ────────────────────────────────────────────────────────
+function Ring({ pct, size = 120, stroke = 10, color = '#4f8ef7', label, sub }) {
+  const r   = (size - stroke) / 2;
+  const c   = 2 * Math.PI * r;
+  const off = c - (pct / 100) * c;
+  return (
+    <div className="progress-ring-container" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none"
+          stroke="rgba(79,142,247,0.1)" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none"
+          stroke={color} strokeWidth={stroke}
+          strokeDasharray={c} strokeDashoffset={off}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)' }}
+        />
+      </svg>
+      <div className="ring-label">
+        <div className="ring-pct" style={{ color }}>{pct}%</div>
+        {label && <div className="ring-sub">{label}</div>}
+        {sub   && <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{sub}</div>}
+      </div>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    API.get('/planner/progress')
-      .then(res => setProgress(res.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+// ── Single course row ─────────────────────────────────────────────────────────
+function CourseRow({ course, roadmapTitle, onClick }) {
+  const total = course.phases?.reduce((n, p) => n + p.lessons.length, 0) ?? 0;
+  const done  = course.phases?.reduce((n, p) => n + p.lessons.filter(l => l.completed).length, 0) ?? 0;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
 
-  const CircularRing = ({ pct }) => {
-    const r = 80;
-    const circ = 2 * Math.PI * r;
-    const offset = circ - (pct / 100) * circ;
-
-    return (
-      <div className="progress-ring-container" style={{ width: 200, height: 200 }}>
-        <svg width="200" height="200" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="100" cy="100" r={r} fill="none" stroke="var(--border)" strokeWidth="10" />
-          <circle
-            cx="100" cy="100" r={r} fill="none"
-            stroke="url(#grad)" strokeWidth="10"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1s ease' }}
-          />
-          <defs>
-            <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="var(--accent)" />
-              <stop offset="100%" stopColor="var(--accent2)" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="ring-label">
-          <div className="ring-pct">{pct}%</div>
-          <div className="ring-sub">complete</div>
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 16,
+        padding: '14px 18px',
+        background: 'var(--bg2)', border: '1px solid var(--border)',
+        borderRadius: 10, cursor: 'pointer', transition: 'all 0.18s',
+        marginBottom: 10,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg3)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)';  e.currentTarget.style.background = 'var(--bg2)'; }}
+    >
+      <PlayCircle size={18} color="var(--accent)" style={{ flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {course.title || roadmapTitle || 'Untitled Course'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="progress-bar" style={{ flex: 1, height: 5 }}>
+            <div className="progress-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--font-mono)', minWidth: 60 }}>
+            {done}/{total} lessons
+          </span>
         </div>
       </div>
-    );
+      <div style={{
+        fontSize: 13, fontWeight: 700, color: pct === 100 ? '#00e5a0' : 'var(--accent)',
+        fontFamily: 'var(--font-mono)', minWidth: 38, textAlign: 'right',
+      }}>
+        {pct}%
+      </div>
+      {pct === 100 && <Trophy size={16} color="#f0b429" style={{ flexShrink: 0 }} />}
+      <ArrowRight size={14} color="var(--text3)" style={{ flexShrink: 0 }} />
+    </div>
+  );
+}
+
+// ── Roadmap row ───────────────────────────────────────────────────────────────
+function RoadmapRow({ roadmap, courseData }) {
+  const totalTopics = roadmap.phases?.reduce((n, p) => n + (p.topics?.length ?? 0), 0) ?? 0;
+  const courseTotal = courseData?.phases?.reduce((n, p) => n + p.lessons.length, 0) ?? 0;
+  const courseDone  = courseData?.phases?.reduce((n, p) => n + p.lessons.filter(l => l.completed).length, 0) ?? 0;
+  const pct = courseTotal ? Math.round((courseDone / courseTotal) * 100) : 0;
+
+  return (
+    <div style={{
+      padding: '14px 18px', background: 'var(--bg2)',
+      border: '1px solid var(--border)', borderRadius: 10, marginBottom: 10,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{roadmap.title}</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{
+            fontSize: 11, padding: '2px 10px', borderRadius: 99,
+            background: 'rgba(79,142,247,0.1)', color: 'var(--accent)',
+            border: '1px solid rgba(79,142,247,0.2)', fontFamily: 'var(--font-mono)',
+          }}>
+            {totalTopics} topics
+          </span>
+          {courseTotal > 0 && (
+            <span style={{
+              fontSize: 11, padding: '2px 10px', borderRadius: 99,
+              background: pct === 100 ? 'rgba(0,229,160,0.1)' : 'rgba(124,108,250,0.1)',
+              color: pct === 100 ? '#00e5a0' : 'var(--accent2)',
+              border: `1px solid ${pct === 100 ? 'rgba(0,229,160,0.2)' : 'rgba(124,108,250,0.2)'}`,
+              fontFamily: 'var(--font-mono)',
+            }}>
+              🎓 {pct}% course done
+            </span>
+          )}
+        </div>
+      </div>
+      {courseTotal > 0 && (
+        <div className="progress-bar" style={{ height: 4 }}>
+          <div className="progress-fill" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function ProgressPage() {
+  const navigate = useNavigate();
+
+  const [roadmaps,  setRoadmaps]  = useState([]);
+  const [courses,   setCourses]   = useState([]);  // array of { roadmapId, course }
+  const [quizStats, setQuizStats] = useState(null);
+  const [loading,   setLoading]   = useState(true);
+
+  useEffect(() => { loadAll(); }, []);
+
+  const loadAll = async () => {
+    try {
+      setLoading(true);
+
+      // Load roadmaps
+      const rmRes = await API.get('/roadmap').catch(() => null);
+      const rms   = rmRes?.data?.roadmaps ?? rmRes?.data ?? [];
+      setRoadmaps(rms);
+
+      // Load course progress for each roadmap concurrently
+      const courseResults = await Promise.all(
+        rms.map(rm =>
+          API.get(`/roadmap/${rm._id}/course`)
+            .then(res => ({ roadmapId: rm._id, course: res.data.course }))
+            .catch(() => null)
+        )
+      );
+      setCourses(courseResults.filter(Boolean));
+
+      // Load quiz history for quiz stats
+      const quizRes = await API.get('/quiz/history').catch(() => null);
+      if (quizRes?.data) {
+        const quizzes = quizRes.data.quizzes ?? quizRes.data ?? [];
+        if (quizzes.length) {
+          const avg = Math.round(quizzes.reduce((s, q) => s + (q.score ?? 0), 0) / quizzes.length);
+          setQuizStats({ total: quizzes.length, avg, best: Math.max(...quizzes.map(q => q.score ?? 0)) });
+        }
+      }
+    } catch (err) {
+      console.error('[Progress] load error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return <Layout><div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner"></div></div></Layout>;
+  // ── Aggregate stats ──────────────────────────────────────────────────────
+  const totalLessons   = courses.reduce((n, c) => n + (c.course?.phases?.reduce((s, p) => s + p.lessons.length, 0) ?? 0), 0);
+  const doneLessons    = courses.reduce((n, c) => n + (c.course?.phases?.reduce((s, p) => s + p.lessons.filter(l => l.completed).length, 0) ?? 0), 0);
+  const coursePct      = totalLessons ? Math.round((doneLessons / totalLessons) * 100) : 0;
+
+  const completedCourses = courses.filter(c => {
+    const total = c.course?.phases?.reduce((n, p) => n + p.lessons.length, 0) ?? 0;
+    const done  = c.course?.phases?.reduce((n, p) => n + p.lessons.filter(l => l.completed).length, 0) ?? 0;
+    return total > 0 && done === total;
+  }).length;
+
+  if (loading) return (
+    <Layout>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div className="spinner" />
+      </div>
+    </Layout>
+  );
 
   return (
     <Layout>
+      {/* ── Header ── */}
       <div className="page-header">
-        <h1 className="page-title">📊 My Progress</h1>
-        <p className="page-subtitle">Read-only view of your learning journey</p>
+        <h1 className="page-title">📊 Your Progress</h1>
+        <p className="page-subtitle">Track your learning across roadmaps, video courses, and quizzes</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 28 }}>
-        {/* Ring + stats */}
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <CircularRing pct={progress?.completionPct || 0} />
-          <div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 36, fontWeight: 800, fontFamily: 'var(--font-display)' }}>{progress?.completedTasks || 0}</div>
-              <div style={{ color: 'var(--text2)', fontSize: 14 }}>Tasks Completed</div>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 36, fontWeight: 800, fontFamily: 'var(--font-display)' }}>{progress?.totalTasks || 0}</div>
-              <div style={{ color: 'var(--text2)', fontSize: 14 }}>Total Tasks</div>
-            </div>
-          </div>
+      {/* ── Summary rings ── */}
+      <div style={{
+        display: 'flex', gap: 32, flexWrap: 'wrap',
+        justifyContent: 'center', marginBottom: 40,
+        padding: '28px', background: 'var(--card)',
+        border: '1px solid var(--border)', borderRadius: 16,
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <Ring pct={coursePct} size={130} color="#4f8ef7" label="Course" sub={`${doneLessons}/${totalLessons} lessons`} />
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 8 }}>Video Lessons</div>
         </div>
-
-        {/* Streak card */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-          <div style={{ fontSize: 64, marginBottom: 12 }}>🔥</div>
-          <div style={{ fontSize: 52, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>
-            {user?.currentStreak || 0}
-          </div>
-          <div style={{ color: 'var(--text2)', fontSize: 16 }}>Day Streak</div>
-          <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 8 }}>
-            Keep it up! Complete a task daily to maintain your streak.
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <Ring pct={roadmaps.length ? Math.min(100, Math.round((roadmaps.length / Math.max(1, roadmaps.length)) * 100)) : 0}
+            size={130} color="#7c6cfa" label="Roadmaps" sub={`${roadmaps.length} active`} />
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 8 }}>Learning Paths</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <Ring pct={quizStats?.avg ?? 0} size={130} color="#00e5a0" label="Avg Score" sub={`${quizStats?.total ?? 0} quizzes`} />
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 8 }}>Quiz Average</div>
         </div>
       </div>
 
-      {/* Completed topics */}
-      <div className="card">
-        <h3 style={{ marginBottom: 20, fontSize: 18 }}>✅ Completed Topics</h3>
-        {progress?.completedTopics?.length === 0 ? (
-          <p style={{ color: 'var(--text2)' }}>No topics completed yet. Start your planner to begin!</p>
-        ) : (
-          <div className="topics-list">
-            {progress?.completedTopics?.map((topic, i) => (
-              <div key={i} className="topic-chip" style={{ background: 'rgba(6,214,160,0.1)', borderColor: 'rgba(6,214,160,0.2)', color: 'var(--accent3)' }}>
-                ✓ {topic}
+      {/* ── Top stat cards ── */}
+      <div className="stats-grid" style={{ marginBottom: 36 }}>
+        <div className="stat-card blue">
+          <div className="stat-icon">🗺️</div>
+          <div className="stat-value">{roadmaps.length}</div>
+          <div className="stat-label">Roadmaps</div>
+        </div>
+        <div className="stat-card purple">
+          <div className="stat-icon">🎓</div>
+          <div className="stat-value">{courses.length}</div>
+          <div className="stat-label">Courses Generated</div>
+        </div>
+        <div className="stat-card green">
+          <div className="stat-icon">✅</div>
+          <div className="stat-value">{doneLessons}</div>
+          <div className="stat-label">Lessons Done</div>
+        </div>
+        <div className="stat-card gold">
+          <div className="stat-icon">🏆</div>
+          <div className="stat-value">{completedCourses}</div>
+          <div className="stat-label">Courses Finished</div>
+        </div>
+      </div>
+
+      {/* ── Course progress section ── */}
+      {courses.length > 0 && (
+        <div style={{ marginBottom: 36 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
+          }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>
+              🎓 Video Course Progress
+            </h2>
+            <span style={{ fontSize: 13, color: 'var(--text2)', fontFamily: 'var(--font-mono)' }}>
+              {doneLessons} / {totalLessons} lessons complete
+            </span>
+          </div>
+          {courses.map(({ roadmapId, course }) => {
+            const rm = roadmaps.find(r => r._id === roadmapId);
+            return (
+              <CourseRow
+                key={roadmapId}
+                course={course}
+                roadmapTitle={rm?.title}
+                onClick={() => navigate(`/roadmap/${roadmapId}/course`)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Roadmaps section ── */}
+      {roadmaps.length > 0 && (
+        <div style={{ marginBottom: 36 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+            🗺️ Learning Roadmaps
+          </h2>
+          {roadmaps.map(rm => {
+            const courseData = courses.find(c => c.roadmapId === rm._id)?.course ?? null;
+            return <RoadmapRow key={rm._id} roadmap={rm} courseData={courseData} />;
+          })}
+        </div>
+      )}
+
+      {/* ── Quiz stats section ── */}
+      {quizStats && (
+        <div style={{ marginBottom: 36 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+            🧠 Quiz Performance
+          </h2>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12,
+          }}>
+            {[
+              { label: 'Quizzes Taken', value: quizStats.total, icon: '📝', color: 'blue' },
+              { label: 'Average Score', value: `${quizStats.avg}%`, icon: '📊', color: 'green' },
+              { label: 'Best Score', value: `${quizStats.best}%`, icon: '🏆', color: 'gold' },
+            ].map(stat => (
+              <div key={stat.label} className={`stat-card ${stat.color}`} style={{ padding: '16px 20px' }}>
+                <div className="stat-icon" style={{ fontSize: 22 }}>{stat.icon}</div>
+                <div className="stat-value" style={{ fontSize: 26 }}>{stat.value}</div>
+                <div className="stat-label">{stat.label}</div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+          <button
+            onClick={() => navigate('/quiz-history')}
+            className="btn btn-secondary"
+            style={{ marginTop: 14, width: 'auto', padding: '9px 22px' }}
+          >
+            View Quiz History →
+          </button>
+        </div>
+      )}
+
+      {/* ── Empty state ── */}
+      {roadmaps.length === 0 && courses.length === 0 && !quizStats && (
+        <div className="card" style={{ textAlign: 'center', padding: '52px 24px' }}>
+          <div style={{ fontSize: 48, marginBottom: 14 }}>🚀</div>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 8 }}>
+            Start your learning journey
+          </h3>
+          <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
+            Generate a roadmap, build a course, and track your progress here.
+          </p>
+          <button className="btn btn-primary" style={{ width: 'auto', padding: '11px 28px' }}
+            onClick={() => navigate('/roadmap')}>
+            Create My First Roadmap
+          </button>
+        </div>
+      )}
     </Layout>
   );
 }
